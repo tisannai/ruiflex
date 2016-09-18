@@ -1,0 +1,9 @@
+#!/bin/sh
+
+# Clean example directories from all generated files.
+
+cd normal
+rake -f ../rakefile.rb clean
+cd ..
+cd reentrant
+rake -f ../rakefile.rb clean

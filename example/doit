@@ -1,0 +1,17 @@
+#!/bin/sh
+
+# Build and run two RuiFlex examples: normal, reentrant.
+
+cd normal
+echo "Building and running normal..."
+rake -f ../rakefile.rb clean
+rake -f ../rakefile.rb
+normal
+
+cd ..
+
+cd reentrant
+echo "Building and running reentrant..."
+rake -f ../rakefile.rb clean
+rake -f ../rakefile.rb
+reentrant

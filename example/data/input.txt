@@ -1,0 +1,5 @@
+# Comment.
+calc 12 + 23
+calc 32 - 21
+calc 69 . 69
+foobar
