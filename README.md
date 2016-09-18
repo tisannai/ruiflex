@@ -5,7 +5,7 @@ Flex usage really simple and quick. User creates a RuiFlex command
 file, which includes Ruby commands that create lexer token
 descriptions. There is possibility for some Flex configuration as
 well. RuiFlex generates, based on the control file, a Flex input file
-(*\*.l*) and a corresponding C header file (*\*.h*), where token has
+(`*.l`) and a corresponding C header file (`*.h`), where token has
 symbolic C names (i.e. defines).
 
 
@@ -35,7 +35,7 @@ The third is for eating white space (excluding newlines). The default
 action, which is to return the token id, is skipped, and the lexer
 will continue with further characters after `:space`.
 
-In *\*.l* file these look like:
+In `*.l` file these look like:
 
     "calc"                         { return TOK_KEY_CALC; }
     "+"                            { return TOK_OP_PLUS; }
@@ -62,9 +62,9 @@ This will set the `%option reentrant` option for Flex. There is also
 `:lineno`, and literal `:flexopt` which is a list of custom entries to
 `%option`.
 
-You can add your own code to *\*.l* header (with `:l_header`), and to
-*\*.l* footer (with `:l_footer`). Likewise you can add own code to
-*\*.h* C file (with `:h_header`) and to footer (with `:h_footer`).
+You can add your own code to `*.l` header (with `:l_header`), and to
+`*.l` footer (with `:l_footer`). Likewise you can add own code to
+`*.h` C file (with `:h_header`) and to footer (with `:h_footer`).
 
 For example:
 
@@ -76,7 +76,7 @@ See `example` directory and `README.md` for two simple examples.
 
 ## Flex file
 
-The generated Flex file (*\*.l*) includes all set options and token
+The generated Flex file (`*.l`) includes all set options and token
 descriptions. Additionally it includes generated C code which can be
 used to get information about the used tokens at runtime.
 
@@ -93,7 +93,7 @@ These token info functions are useful in parser error reporting.
 
 ## Header file
 
-The generated C header file (*\*.h*) includes prototypes of used Flex
+The generated C header file (`*.h`) includes prototypes of used Flex
 API functions, and all the token id defines. There is also prototypes
 for token info functions.
 
