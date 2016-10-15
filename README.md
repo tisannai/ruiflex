@@ -1,7 +1,7 @@
 # RuiFlex - Gnu Flex front-end using Ruby
 
 RuiFlex is a light abstraction over Flex. It tries to make the typical
-Flex usage really simple and quick. User creates a RuiFlex command
+Flex usage really simple and quick. User creates a RuiFlex control
 file, which includes Ruby commands that create lexer token
 descriptions. There is possibility for some Flex configuration as
 well. RuiFlex generates, based on the control file, a Flex input file
