@@ -5,7 +5,7 @@ Flex usage really simple and quick. User creates a RuiFlex control
 file, which includes Ruby commands that create lexer token
 descriptions. There is possibility for some Flex configuration as
 well. RuiFlex generates, based on the control file, a Flex input file
-(`*.l`) and a corresponding C header file (`*.h`), where token has
+(`*.l`) and a corresponding C header file (`*.h`), where tokens have
 symbolic C names (i.e. defines).
 
 
@@ -94,13 +94,13 @@ These token info functions are useful in parser error reporting.
 ## Header file
 
 The generated C header file (`*.h`) includes prototypes of used Flex
-API functions, and all the token id defines. There is also prototypes
+API functions, and all the token id defines. There are also prototypes
 for token info functions.
 
 
 ## Code generation
 
-RuiFlex assumes that it can use the basename of the control file for
+RuiFlex assumes that it can use basename of the control file for
 generating the other files.
 
 For example if control file is `my_tokens.rb`, the files
