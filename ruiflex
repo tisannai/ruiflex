@@ -409,6 +409,7 @@ FlexOpt.get( :flexopt ).each do |opt|
 end
 fh.puts "" if FlexOpt::Opts.values.index( true )
 fh.puts "D    [0-9]"
+fh.puts "O    [0-7]"
 fh.puts "B    [0-1]"
 fh.puts "L    [a-zA-Z_]"
 fh.puts "H    [a-fA-F0-9]"
@@ -452,8 +453,8 @@ fh.write " };\n"
 fh.puts
 
 fh.puts "static char* ruiflex_token_id_data[] = {"
-Token.tokens.each do |t|
-    fh.puts "  \"#{t.idstr}\","
+Token.token_ids.each do |t|
+    fh.puts "  \"#{t[0]}\","
 end
 fh.puts "};"
 fh.puts
