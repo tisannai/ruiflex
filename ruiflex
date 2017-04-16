@@ -17,11 +17,13 @@
 
 require 'como'
 include Como
+require 'byebug'
 
 Spec.command( 'ruiflex', 'Tero Isannainen', '2015, 2016',
     [
         [ :single,    'file',      '-f', "RuiFlex file (suffix: rb)." ],
         [ :switch,    'transform', '-t', "Transform output (i.e. run flex)." ],
+        [ :opt_multi, 'gens',      '-g', "Custom output generetors." ],
         [ :exclusive, 'example',   '-e', "Show example RuiFlex file." ],
         [ :exclusive, 'doc',       '-d', "Show token info." ],
     ] )
@@ -247,6 +249,13 @@ class Token
         case @type
 
         when :keyword, :longop, :liteop, :punct, :custom;
+
+            # Check for duplicates. There should be an existing with
+            # the same type.
+            if @@token_ids[ idstr ]
+                Token.error "Duplicate TOKEN: #{idstr}"
+            end
+
             # These types all get unique IDs.
             @id = Token.getid
             @@token_ids[ idstr ] = [ @id, descstr ]
@@ -257,6 +266,8 @@ class Token
             unless @@token_ids[ idstr ]
                 @id = Token.getid
                 @@token_ids[ idstr ] = [ @id, descstr ]
+            else
+                @id = @@token_ids[ idstr ][0]
             end
 
         end
@@ -316,6 +327,11 @@ class Token
     # List of all token IDs.
     def Token.token_ids
         @@token_ids
+    end
+
+    def Token.error( msg )
+        STDERR.puts "ruiflex error: \"#{msg}\", exiting!"
+        exit( false )
     end
 
 end
@@ -386,7 +402,6 @@ end
 # Add EOF token
 
 load Opt['file'].value
-
 
 basename = File.basename( Opt['file'].value, '.rb' )
 
@@ -520,4 +535,48 @@ fh.close
 
 if Opt['transform'].given
     system( "flex -o #{c_file} #{lex_file}" )
+end
+
+
+
+
+
+# ------------------------------------------------------------
+# Custom generators:
+
+class RuiGen
+    @@gens = []
+
+    def RuiGen.gens
+        @@gens
+    end
+
+    def initialize
+        @@gens.push self
+    end
+
+    def open
+    end
+
+    def tokens( tokens )
+    end
+
+    def token_ids( token_ids )
+    end
+
+    def close
+    end
+end
+
+
+if Opt['gens'].given
+    Opt['gens'].value.each do |gen|
+        load gen
+    end
+    RuiGen.gens.each do |gen|
+        gen.open
+        gen.tokens( Token.tokens )
+        gen.token_ids( Token.token_ids )
+        gen.close
+    end
 end
