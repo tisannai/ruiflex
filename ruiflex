@@ -382,7 +382,7 @@ end
 if Opt['doc'].given
 
     Token::TOKEN_TYPES.each do |k,v|
-        doc = Token.new( "<re>", k, "<tag>" )
+        doc = Token.new( "<re>", k, "<#{k}_tag>" )
         puts "Token name:     #{k.to_s}"
         puts "  C define:     #{v[:token].call(doc)}"
         puts "  Class:        #{v[:desc]}"
