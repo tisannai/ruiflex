@@ -109,6 +109,34 @@ For example if control file is `my_tokens.rb`, the files
 option.
 
 
+## Custom generator
+
+RuiFlex generates Flex file for C programmers. However, it is
+sometimes useful to provide other targets. For example if user wants
+to mix C-parser with MRuby backend, the MRuby backend might need to
+have the same token info as C.
+
+Custom generators are specified on command line for RuiFlex. Custom
+generator is a user implemented Ruby class, which is inherited from
+RuiFlex internal base class. User provides custom implementation for
+active method, and creates one "dummy" instance of the custom class,
+in order to register the generator to RuiFlex.
+
+Ruiflex calls methods in this order:
+
+* "open" - Used to open the output file(s).
+
+* "tokens" - List of all token objects are passed here.
+
+* "token_ids" - Hash of { idstr => [id, descstr] } for all tokens are
+              passed here.
+
+ * "close" - Used to close the output file(s).
+
+See example/ruigen for an example of custom class and example/doit for
+example RuiFlex execution.
+
+
 ## Disclaimer
 
 RuiFlex intents to target the very basic Flex usage. If you need

@@ -15,3 +15,11 @@ echo "Building and running reentrant..."
 rake -f ../rakefile.rb clean
 rake -f ../rakefile.rb
 reentrant
+
+cd ..
+
+cd ruigen
+echo "Creating custom output..."
+ruiflex -f n_flex.rb -n -g custom.rb
+
+cd ..

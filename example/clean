@@ -7,3 +7,6 @@ rake -f ../rakefile.rb clean
 cd ..
 cd reentrant
 rake -f ../rakefile.rb clean
+cd ..
+rm -f ruigen/tokens.rb
+cd ..
