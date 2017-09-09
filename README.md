@@ -126,10 +126,10 @@ Ruiflex calls methods in this order:
 
 * "open" - Used to open the output file(s).
 
-* "tokens" - List of all token objects are passed here.
+* "tokens" - List of all Token objects are passed here.
 
 * "token_ids" - Hash of { idstr => [id, descstr] } for all tokens are
-              passed here.
+                passed here.
 
  * "close" - Used to close the output file(s).
 

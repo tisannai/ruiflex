@@ -191,6 +191,9 @@ class Token
     # Complementary tag for operator and other puncts.
     attr_accessor :tag
 
+    # Optional appearance for token (e.g. in reporting).
+    attr_accessor :show
+
     # Id number for Token.
     attr_reader :id
 
@@ -204,12 +207,19 @@ class Token
 
     # Create a new Token. Register it to the complete list of all
     # existing Tokens.
-    def initialize( re, type, tag = nil, &blk )
+    #
+    # @param re   [Regexp] Regexp for matching the token.
+    # @param type [Symbol] Token type (see: ruiflex -d).
+    # @param tag  [String] Token tag  (see: ruiflex -d).
+    # @param show [String] Token show appearance (default: re).
+    #
+    def initialize( re, type, tag = nil, show = nil, &blk )
         @@tokens.push self
 
         @re = re
         @type = type
         @tag = tag
+        @show = show || @re
 
         @ignore = false
         @action = nil

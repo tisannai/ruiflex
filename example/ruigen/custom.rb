@@ -6,7 +6,7 @@ class Custom < RuiGen
 
     def tokens( tokens )
         tokens.each do |i|
-            @fh.puts "#{i.idstr} = #{i.id}"
+            @fh.puts "#{i.idstr} = #{i.id}   # #{i.show}"
         end
     end
 
