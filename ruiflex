@@ -91,13 +91,13 @@ class Token
         },
 
         :const => {
-            :token => -> s { "TOK_CONST" },
+            :token => -> s { if s.tag; "TOK_#{s.tag}" else "TOK_CONST" end },
             :desc => "constant",
             :info => "Numeric constant."
         },
 
         :ident => {
-            :token => -> s { "TOK_ID" },
+            :token => -> s { if s.tag; "TOK_#{s.tag}" else "TOK_ID" end },
             :desc => "identifier",
             :info => "Name of variable."
         },
