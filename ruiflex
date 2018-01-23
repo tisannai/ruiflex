@@ -21,12 +21,16 @@ require 'byebug'
 
 Spec.command( 'ruiflex', 'Tero Isannainen', '2015, 2016',
     [
-        [ :single,    'file',      '-f', "RuiFlex file (suffix: rb)." ],
-        [ :switch,    'transform', '-t', "Transform output (i.e. run flex)." ],
-        [ :switch,    'nop',       '-n', "No operaration, no output." ],
-        [ :opt_multi, 'gens',      '-g', "Custom output generetors." ],
-        [ :exclusive, 'example',   '-e', "Show example RuiFlex file." ],
-        [ :exclusive, 'doc',       '-d', "Show token info." ],
+        [ :single,      'file',      '-f',   "RuiFlex file (suffix: rb)." ],
+        [ :opt_any,     'transform', '-t',   "Transform output (i.e. run flex with -P if arg)." ],
+        [ :opt_single,  'outdir',    '-o',   "Output dir for all generated files." ],
+        [ :opt_single,  'outlex',    '-ol',  "Output dir for lex files." ],
+        [ :opt_single,  'outc',      '-oc',  "Output dir for c files." ],
+        [ :opt_single,  'outh',      '-oh',  "Output dir for c files." ],
+        [ :switch,      'nop',       '-n',   "No operaration, no output." ],
+        [ :opt_multi,   'gens',      '-g',   "Custom output generetors." ],
+        [ :exclusive,   'example',   '-e',   "Show example RuiFlex file." ],
+        [ :exclusive,   'doc',       '-d',   "Show token info." ],
     ] )
 
 
@@ -36,6 +40,7 @@ class FlexOpt
     Opts = {
         # Flex handles linenumber counting.
         :lineno => false,
+
         # Reentrant lexer.
         :reentrant => false,
 
@@ -51,6 +56,12 @@ class FlexOpt
         :h_header => nil,
         # Addition footer code after everything else (*.h).
         :h_footer => nil,
+
+        # Basename for generated code.
+        :basename => 'ruiflex',
+
+        # Token prefix,
+        :prefix => 'TOK',
     }
 
     # Set option value.
@@ -85,43 +96,43 @@ class Token
     # Token types and related info.
     TOKEN_TYPES = {
         :comment => {
-            :token => -> s { "TOK_COMMENT" },
+            :token => -> s { "#{FlexOpt.get(:prefix)}_COMMENT" },
             :desc => "comment",
             :info => "Comment",
         },
 
         :const => {
-            :token => -> s { if s.tag; "TOK_#{s.tag}" else "TOK_CONST" end },
+            :token => -> s { if s.tag; "#{FlexOpt.get(:prefix)}_#{s.tag}" else "#{FlexOpt.get(:prefix)}_CONST" end },
             :desc => "constant",
             :info => "Numeric constant."
         },
 
         :ident => {
-            :token => -> s { if s.tag; "TOK_#{s.tag}" else "TOK_ID" end },
+            :token => -> s { if s.tag; "#{FlexOpt.get(:prefix)}_#{s.tag}" else "#{FlexOpt.get(:prefix)}_ID" end },
             :desc => "identifier",
             :info => "Name of variable."
         },
 
         :funccall => {
-            :token => -> s { "TOK_FUNC_ID" },
+            :token => -> s { "#{FlexOpt.get(:prefix)}_FUNC_ID" },
             :desc => "function call",
             :info => "Name of function."
         },
 
         :string => {
-            :token => -> s { "TOK_STR" },
+            :token => -> s { "#{FlexOpt.get(:prefix)}_STR" },
             :desc => "string literal",
             :info => "String constant."
         },
 
         :keyword => {
-            :token => -> s { if s.tag; "TOK_KEY_#{s.tag}" else "TOK_KEY_#{s.re.upcase}" end },
+            :token => -> s { if s.tag; "#{FlexOpt.get(:prefix)}_KEY_#{s.tag}" else "#{FlexOpt.get(:prefix)}_KEY_#{s.re.upcase}" end },
             :desc => "keyword",
             :info => "Keyword token."
         },
 
         :longop => {
-            :token => -> s { "TOK_#{s.tag}" },
+            :token => -> s { "#{FlexOpt.get(:prefix)}_#{s.tag}" },
             :desc => "operator",
             :info => "Operator with specific name."
         },
@@ -133,31 +144,31 @@ class Token
         },
 
         :punct => {
-            :token => -> s { "TOK_#{s.tag}" },
+            :token => -> s { "#{FlexOpt.get(:prefix)}_#{s.tag}" },
             :desc => "punctuation",
             :info => "Semantic separator of tokens."
         },
 
         :space => {
-            :token => -> s { "TOK_SPACE" },
+            :token => -> s { "#{FlexOpt.get(:prefix)}_SPACE" },
             :desc => "space character",
             :info => "Formatting separator of tokens."
         },
 
         :custom => {
-            :token => -> s { "TOK_#{s.tag}" },
+            :token => -> s { "#{FlexOpt.get(:prefix)}_#{s.tag}" },
             :desc => "custom token",
             :info => "Customized token."
         },
 
         :unknown => {
-            :token => -> s { "TOK_UNKNOWN" },
+            :token => -> s { "#{FlexOpt.get(:prefix)}_UNKNOWN" },
             :desc => "unknown character",
             :info => "Unrecognized character (possible error)."
         },
 
         :error => {
-            :token => -> s { "TOK_ERROR" },
+            :token => -> s { "#{FlexOpt.get(:prefix)}_ERROR" },
             :desc => "input error",
             :info => "Erroneous character(s)."
         },
@@ -418,9 +429,30 @@ unless Opt['nop'].given
 
     basename = File.basename( Opt['file'].value, '.rb' )
 
-    lex_file = "#{basename}.l"
-    header_file = "#{basename}.h"
-    c_file = "#{basename}.c"
+    outlex = '.'
+    outc = '.'
+    outh = '.'
+
+    if Opt['outdir'].given
+        outlex = Opt['outdir'].value
+        outc = Opt['outdir'].value
+        outh = Opt['outdir'].value
+    end
+
+    # Select output directories.
+    outlex = Opt['outlex'].apply( outlex )
+    outc = Opt['outc'].apply( outc )
+    outh = Opt['outh'].apply( outh )
+
+
+    lex_file = "#{outlex}/#{basename}.l"
+    h_file = "#{outh}/#{basename}.h"
+    c_file = "#{outc}/#{basename}.c"
+
+    lex_prefix = "yy"
+    if Opt['transform'].given && Opt['transform'].value.any?
+        lex_prefix = Opt['transform'].value[0]
+    end
 
 
     # ------------------------------------------------------------
@@ -446,7 +478,7 @@ unless Opt['nop'].given
     fh.puts "IS   (u|U|l|L)*"
     fh.puts ""
     fh.puts "%{"
-    fh.puts "#include \"#{header_file}\""
+    fh.puts "#include <#{File.basename(h_file)}>"
     fh.puts FlexOpt.get( :l_header ) if FlexOpt.get( :l_header )
     fh.puts "%}"
     fh.puts ""
@@ -459,15 +491,15 @@ unless Opt['nop'].given
     fh.puts "%%"
     fh.puts ""
     if FlexOpt.get( :reentrant )
-        fh.puts "int yywrap( yyscan_t yyscanner ) { return( 1 ); }"
+        fh.puts "int #{lex_prefix}wrap( #{lex_prefix}scan_t #{lex_prefix}scanner ) { return( 1 ); }"
     else
-        fh.puts "int yywrap() { return( 1 ); }"
+        fh.puts "int #{lex_prefix}wrap() { return( 1 ); }"
     end
     fh.puts ""
 
 
     # Token description types.
-    fh.puts "static char* ruiflex_token_desc_data[] = {"
+    fh.puts "static char* #{FlexOpt.get(:basename)}_token_desc_data[] = {"
 
     Token::TOKEN_TYPES.each do |k,v|
         fh.puts "  \"#{v[:desc]}\","
@@ -475,12 +507,12 @@ unless Opt['nop'].given
     fh.puts "};"
     fh.puts
 
-    fh.write "static int ruiflex_token_desc_table[] = { "
+    fh.write "static int #{FlexOpt.get(:basename)}_token_desc_table[] = { "
     fh.write Token.tokens.collect{|i| i.ididx.to_s}.join( ", " )
     fh.write " };\n"
     fh.puts
 
-    fh.puts "static char* ruiflex_token_id_data[] = {"
+    fh.puts "static char* #{FlexOpt.get(:basename)}_token_id_data[] = {"
     Token.token_ids.each do |t|
         fh.puts "  \"#{t[0]}\","
     end
@@ -488,13 +520,13 @@ unless Opt['nop'].given
     fh.puts
 
     # Function that returns Token description based on ID number.
-    fh.puts "char* ruiflex_token_desc( int id ) {"
-    fh.puts "  return ruiflex_token_desc_data["
-    fh.puts "    ruiflex_token_desc_table[ id - RUIFLEX_FIRST_TOKEN_NO ] ];"
+    fh.puts "char* #{FlexOpt.get(:basename)}_token_desc( int id ) {"
+    fh.puts "  return #{FlexOpt.get(:basename)}_token_desc_data["
+    fh.puts "    #{FlexOpt.get(:basename)}_token_desc_table[ id - #{FlexOpt.get(:basename)}_FIRST_TOKEN_NO ] ];"
     fh.puts "}"
     fh.puts ""
-    fh.puts "char* ruiflex_token_id( int id ) {"
-    fh.puts "  return ruiflex_token_id_data[ id - RUIFLEX_FIRST_TOKEN_NO ];"
+    fh.puts "char* #{FlexOpt.get(:basename)}_token_id( int id ) {"
+    fh.puts "  return #{FlexOpt.get(:basename)}_token_id_data[ id - #{FlexOpt.get(:basename)}_FIRST_TOKEN_NO ];"
     fh.puts "}"
     fh.puts FlexOpt.get( :l_footer ) if FlexOpt.get( :l_footer )
 
@@ -504,50 +536,50 @@ unless Opt['nop'].given
     # ------------------------------------------------------------
     # Create C-header file:
 
-    fh = File.open( header_file, 'w' )
-    fh.puts "/* Flex header file generated by ruiflex: #{Time.now.to_s} */"
+    fh = File.open( h_file, 'w' )
+    fh.puts "/* Flex header file generated by #{FlexOpt.get(:basename)}: #{Time.now.to_s} */"
     fh.puts "#ifndef #{basename.upcase}_H"
     fh.puts "#define #{basename.upcase}_H"
     fh.puts ""
     fh.puts FlexOpt.get( :h_header ) if FlexOpt.get( :h_header )
     fh.puts "/* Flex interface. */"
     if FlexOpt.get( :reentrant )
-        fh.puts "typedef void* yyscan_t;"
-        fh.puts "int yylex_init( yyscan_t* ptr_yy_globals );"
-        fh.puts "int yylex ( yyscan_t yyscanner );"
-        fh.puts "int yylex_destroy( yyscan_t yyscanner );"
-        fh.puts "char* yyget_text( yyscan_t scanner );"
-        fh.puts "void yyset_in( FILE* in_str, yyscan_t scanner );"
-        fh.puts "int yyget_lineno( yyscan_t scanner );"
+        fh.puts "typedef void* #{lex_prefix}scan_t;"
+        fh.puts "int #{lex_prefix}lex_init( #{lex_prefix}scan_t* ptr_yy_globals );"
+        fh.puts "int #{lex_prefix}lex ( #{lex_prefix}scan_t yyscanner );"
+        fh.puts "int #{lex_prefix}lex_destroy( #{lex_prefix}scan_t yyscanner );"
+        fh.puts "char* #{lex_prefix}get_text( #{lex_prefix}scan_t scanner );"
+        fh.puts "void #{lex_prefix}set_in( FILE* in_str, #{lex_prefix}scan_t scanner );"
+        fh.puts "int #{lex_prefix}get_lineno( #{lex_prefix}scan_t scanner );"
     else
-        fh.puts "extern FILE* yyin;"
-        fh.puts "extern int yylineno;"
-        fh.puts "extern char* yytext;"
-        fh.puts "int yylex(void);"
+        fh.puts "extern FILE* #{lex_prefix}in;"
+        fh.puts "extern int #{lex_prefix}lineno;"
+        fh.puts "extern char* #{lex_prefix}text;"
+        fh.puts "int #{lex_prefix}lex(void);"
     end
     fh.puts ""
     fh.puts ""
     fh.puts "/* Generic token defines. */"
-    fh.puts format( "#define %-26s 0", "TOK_EOF" )
+    fh.puts format( "#define %-26s 0", "#{FlexOpt.get(:prefix)}_EOF" )
     fh.puts ""
     fh.puts "/* Generated token defines. */"
 
-    fh.puts format( "#define %-26s #{Token::ID_START}", "RUIFLEX_FIRST_TOKEN_NO" )
+    fh.puts format( "#define %-26s #{Token::ID_START}", "#{FlexOpt.get(:basename)}_FIRST_TOKEN_NO" )
 
     Token.token_ids.each do |k,v|
         fh.puts format( "#define %-26s #{v[0]}", k )
     end
 
     fh.puts ""
-    fh.puts "char* ruiflex_token_desc( int id );"
-    fh.puts "char* ruiflex_token_id( int id );"
+    fh.puts "char* #{FlexOpt.get(:basename)}_token_desc( int id );"
+    fh.puts "char* #{FlexOpt.get(:basename)}_token_id( int id );"
     fh.puts FlexOpt.get( :h_footer ) if FlexOpt.get( :h_footer )
     fh.puts ""
     fh.puts "#endif"
     fh.close
 
     if Opt['transform'].given
-        system( "flex -o #{c_file} #{lex_file}" )
+        system( "flex -P #{lex_prefix} -o #{c_file} #{lex_file}" )
     end
 
 end
